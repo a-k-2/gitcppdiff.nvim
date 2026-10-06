@@ -1,0 +1,112 @@
+*gitcppdiff.txt*  Semantic git diff for C++                     *gitcppdiff*
+
+Requires Neovim >= 0.12 and the `gitcppdiff` executable (built with `make`).
+
+==============================================================================
+COMMANDS                                                    *gitcppdiff-commands*
+
+                                                                     *:CppDiff*
+:CppDiff [{args}]
+        Open a floating overview of the classes / methods changed between two
+        revisions, with a live preview. {args} go to the executable:
+>
+        :CppDiff                  HEAD vs working tree
+        :CppDiff --staged         HEAD vs index
+        :CppDiff main...HEAD      merge-base(main, HEAD) vs HEAD
+        :CppDiff v1 v2 -- src/    two revisions, only below src/
+        :CppDiff --api-only       only the public API surface
+<
+                                                               *:CppDiffBuild*
+:CppDiffBuild
+        Build the executable by running `make` in the plugin directory.
+
+                                                               *:CppDiffClose*
+:CppDiffClose
+        Close the window.
+
+                                                               *:CppDiffNext*
+:[count]CppDiffNext
+:[count]CppDiffPrev                                            *:CppDiffPrev*
+        Jump to the next / previous change of the last run, from any buffer
+        (wraps; honours the accepted / bad visibility filter). With the window
+        open it moves in the list. No keys are bound, e.g. >lua
+            vim.keymap.set("n", "]d", "<cmd>CppDiffNext<cr>")
+            vim.keymap.set("n", "[d", "<cmd>CppDiffPrev<cr>")
+<
+                                                          *:CppDiffClearMarks*
+:CppDiffClearMarks
+        Forget all accepted / bad marks of the current repository.
+
+==============================================================================
+WINDOW KEYS                                                   *gitcppdiff-keys*
+
+  a          accept the change (again clears). Visual: whole range.
+  b          mark the change as bad (again clears). Visual: whole range.
+  u          clear the mark.
+  A          toggle visibility of accepted changes.
+  B          toggle visibility of bad changes.
+  S          show all.
+  <CR>       jump to the declaration (removed symbols: old revision, read-only).
+  gd         jump to the definition (.cpp).
+  <Tab>      preview: source / diff (old -> new, word-level highlighting).
+  gr         callers / references of the change -> quickfix.
+  za zc zo   fold toggle / close / open.   zM zR  close / open all folds.
+  h  l       collapse or parent / expand or first child.
+  e          expand / collapse members of added or removed classes.
+  r          re-run the executable.
+  <C-q>      send visible changes to the quickfix list.
+  ?          help.   q, <Esc>  close.
+
+On a class, namespace or file row a / b / u apply to everything below it.
+Pending changes are always visible. Marks persist per repository, keyed by a
+hash of the change, and vanish when the reviewed code changes again.
+
+==============================================================================
+CALLERS                                                   *gitcppdiff-callers*
+
+API changes show how many places use the symbol (LSP references, e.g. clangd,
+after its background index is idle). Removed symbols show the remaining textual
+references (`git grep`). Options: `callers = { enabled, auto, max, client,
+grep_removed, index_timeout }`.
+
+PROJECT FILE                                                *gitcppdiff-project*
+
+`.gitcppdiff` in the repository root configures the executable: >
+    macro MYLIB_EXPORT
+    ignore third_party/ **/*_generated.*
+    public include/**
+    internal-namespace detail internal
+    all-api false
+<
+==============================================================================
+SETUP                                                       *gitcppdiff-setup*
+
+>lua
+    require("gitcppdiff").setup({
+      bin = nil, extra_args = {}, icons = true, border = "rounded",
+      width = 0.92, height = 0.85, list_width = 0.52,
+      show_accepted = true, show_bad = true, preview = "source",
+      expand = false, fold = "none", advance = true, persist = true,
+      callers = { enabled = true, auto = true, max = 300, client = "clangd",
+                  grep_removed = true, index_timeout = 45 },
+      keys = { accept = "a", bad = "b", clear = "u", show_all = "S",
+               toggle_accepted = "A", toggle_bad = "B", jump = "<CR>",
+               jump_definition = "gd", preview_mode = "<Tab>", refresh = "r",
+               expand = "e", quickfix = "<C-q>", callers = "gr", help = "?",
+               fold_toggle = "za", fold_close = "zc", fold_open = "zo",
+               fold_close_all = "zM", fold_open_all = "zR",
+               fold_left = "h", fold_right = "l",
+               close = { "q", "<Esc>" } },
+    })
+<
+HIGHLIGHT GROUPS                                         *gitcppdiff-highlights*
+
+  GitCppDiffAdded GitCppDiffRemoved GitCppDiffModified GitCppDiffApi
+  GitCppDiffRenamed GitCppDiffAccepted GitCppDiffBad GitCppDiffDim
+  GitCppDiffTitle GitCppDiffRange GitCppDiffKindType GitCppDiffKindFunc
+  GitCppDiffKindField GitCppDiffKindEnum GitCppDiffKindOp
+  GitCppDiffAddLine GitCppDiffDelLine GitCppDiffAddWord GitCppDiffDelWord
+
+All are default links; override them in your colorscheme.
+
+ vim:tw=78:ts=8:ft=help:norl:
