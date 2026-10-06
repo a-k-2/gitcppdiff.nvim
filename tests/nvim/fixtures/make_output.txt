@@ -1,0 +1,84 @@
+==> [1/3] configuring: detecting the C/C++ compiler, downloading tree-sitter + tree-sitter-cpp (first run needs network, 1-2 min)
+cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+-- gitcppdiff: detecting the C and C++ compiler ...
+-- The C compiler identification is GNU 13.3.0
+-- The CXX compiler identification is GNU 13.3.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- gitcppdiff: using C++ compiler GNU 13.3.0 (/usr/bin/c++)
+-- gitcppdiff: downloading tree-sitter (github.com/tree-sitter/tree-sitter) ...
+-- Populating tree_sitter
+-- Configuring done (0.0s)
+-- Generating done (0.0s)
+-- Build files have been written to: /home/claude/gitcppdiff.nvim/build/_deps/tree_sitter-subbuild
+[1/9] Creating directories for 'tree_sitter-populate'
+[1/9] Performing download step (git clone) for 'tree_sitter-populate'
+Cloning into 'tree_sitter-src'...
+HEAD is now at a467ea8 fix(rust): correct crate versions in root Cargo.toml file
+[2/9] Performing update step for 'tree_sitter-populate'
+-- Already at requested tag: v0.25.9
+[3/9] No patch step for 'tree_sitter-populate'
+[5/9] No configure step for 'tree_sitter-populate'
+[6/9] No build step for 'tree_sitter-populate'
+[7/9] No install step for 'tree_sitter-populate'
+[8/9] No test step for 'tree_sitter-populate'
+[9/9] Completed 'tree_sitter-populate'
+-- gitcppdiff: downloading tree-sitter-cpp (github.com/tree-sitter/tree-sitter-cpp) ...
+-- Populating tree_sitter_cpp
+-- Configuring done (0.0s)
+-- Generating done (0.0s)
+-- Build files have been written to: /home/claude/gitcppdiff.nvim/build/_deps/tree_sitter_cpp-subbuild
+[1/9] Creating directories for 'tree_sitter_cpp-populate'
+[1/9] Performing download step (git clone) for 'tree_sitter_cpp-populate'
+Cloning into 'tree_sitter_cpp-src'...
+HEAD is now at f41e1a0 0.23.4
+[2/9] Performing update step for 'tree_sitter_cpp-populate'
+-- Already at requested tag: v0.23.4
+[3/9] No patch step for 'tree_sitter_cpp-populate'
+[5/9] No configure step for 'tree_sitter_cpp-populate'
+[6/9] No build step for 'tree_sitter_cpp-populate'
+[7/9] No install step for 'tree_sitter_cpp-populate'
+[8/9] No test step for 'tree_sitter_cpp-populate'
+[9/9] Completed 'tree_sitter_cpp-populate'
+-- gitcppdiff: dependencies ready
+-- Configuring done (84.0s)
+-- Generating done (0.0s)
+-- Build files have been written to: /home/claude/gitcppdiff.nvim/build
+==> [2/3] compiling
+cmake --build build --parallel
+[1/25] Building C object CMakeFiles/ts_cpp.dir/_deps/tree_sitter_cpp-src/src/scanner.c.o
+[2/25] Building C object _deps/tree_sitter-build/CMakeFiles/tree-sitter.dir/src/alloc.c.o
+[3/25] Building C object _deps/tree_sitter-build/CMakeFiles/tree-sitter.dir/src/get_changed_ranges.c.o
+[4/25] Building C object _deps/tree_sitter-build/CMakeFiles/tree-sitter.dir/src/language.c.o
+[5/25] Building C object _deps/tree_sitter-build/CMakeFiles/tree-sitter.dir/src/lexer.c.o
+[6/25] Building C object _deps/tree_sitter-build/CMakeFiles/tree-sitter.dir/src/node.c.o
+[7/25] Building C object CMakeFiles/ts_cpp.dir/_deps/tree_sitter_cpp-src/src/parser.c.o
+[8/25] Building C object _deps/tree_sitter-build/CMakeFiles/tree-sitter.dir/src/parser.c.o
+[9/25] Building C object _deps/tree_sitter-build/CMakeFiles/tree-sitter.dir/src/stack.c.o
+[10/25] Building C object _deps/tree_sitter-build/CMakeFiles/tree-sitter.dir/src/subtree.c.o
+[11/25] Building C object _deps/tree_sitter-build/CMakeFiles/tree-sitter.dir/src/tree.c.o
+[12/25] Building C object _deps/tree_sitter-build/CMakeFiles/tree-sitter.dir/src/query.c.o
+[13/25] Building C object _deps/tree_sitter-build/CMakeFiles/tree-sitter.dir/src/wasm_store.c.o
+[14/25] Linking C static library libts_cpp.a
+[15/25] Building C object _deps/tree_sitter-build/CMakeFiles/tree-sitter.dir/src/tree_cursor.c.o
+[16/25] Building CXX object CMakeFiles/gitcppdiff.dir/src/main.cpp.o
+[17/25] Building CXX object CMakeFiles/gitcppdiff.dir/src/git.cpp.o
+[18/25] Building CXX object CMakeFiles/gitcppdiff.dir/src/parse.cpp.o
+[19/25] Building CXX object CMakeFiles/gitcppdiff.dir/src/diff.cpp.o
+[20/25] Building CXX object CMakeFiles/gitcppdiff.dir/src/companion.cpp.o
+[21/25] Building CXX object CMakeFiles/gitcppdiff.dir/src/projconfig.cpp.o
+[22/25] Building CXX object CMakeFiles/gitcppdiff.dir/src/render_json.cpp.o
+[23/25] Linking C static library _deps/tree_sitter-build/libtree-sitter.a
+[24/25] Building CXX object CMakeFiles/gitcppdiff.dir/src/render_pretty.cpp.o
+[25/25] Linking CXX executable gitcppdiff
+==> [3/3] installing bin/gitcppdiff
+mkdir -p bin && cp build/gitcppdiff bin/gitcppdiff
+==> done

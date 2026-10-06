@@ -1,4 +1,4 @@
-# gitcppdiff
+# gitcppdiff.nvim
 
 **Semantic `git diff` for C++, inside Neovim.** See which classes, methods, enums, fields and aliases changed
 between two revisions — added, removed, modified, **API change**, or renamed/moved — review them in a floating
@@ -15,10 +15,10 @@ This repo contains both parts:
 │  2   1   14 pending          A accepted:shown │ API change  ui::Widget::resize  parameters: …  │
 │   src/widget.h 2 1 1 3 1                      │  7 public:                                     │
 │  └─  ui 2 1 1 3 1                             │  8   Widget();                                 │
-│     ├─   Color  enum  [API]  :4               │  9   void resize(int w, int h, bool animate…   │
-│     ├─   Widget  class  [API]  :6             │ 10   int width() const;                        │
-│     │  ├─   resize(int w, int h, bool …) [API]│ 11   void update();                            │
-│     │  ├─   paintLegacy()  [RENAMED]  :12     │ 12   void paintLegacy();                       │
+│     ├─   Color  enum  (API)  :4               │  9   void resize(int w, int h, bool animate…   │
+│     ├─   Widget  class  (API)  :6             │ 10   int width() const;                        │
+│     │  ├─   resize(int w, int h, bool …) (API)│ 11   void update();                            │
+│     │  ├─   paintLegacy()  (RENAMED)  :12     │ 12   void paintLegacy();                       │
 │     │  └─   ratio() const  api  :13           │ 13   double ratio() const;                     │
 ╰ a accept · b bad · A/B/S filter · ⏎ jump · ? help ┴────────────────────────────────────────────╯
 ```
@@ -33,7 +33,7 @@ access (CMake fetches tree-sitter + the C++ grammar). Linux and macOS.
 
 **lazy.nvim**
 ```lua
-{ "a-k-2/gitcppdiff", build = "make", cmd = "CppDiff", opts = {} }
+{ "a-k-2/gitcppdiff.nvim", build = "make", cmd = "CppDiff", opts = {} }
 ```
 
 **vim.pack (built in, Neovim 0.12)**
@@ -42,16 +42,32 @@ access (CMake fetches tree-sitter + the C++ grammar). Linux and macOS.
 vim.api.nvim_create_autocmd("PackChanged", {
   callback = function(ev)
     local d = ev.data
-    if d.spec.name == "gitcppdiff" and (d.kind == "install" or d.kind == "update") then
-      vim.system({ "make", "-C", d.path }):wait()
+    if d.spec.name == "gitcppdiff.nvim" and (d.kind == "install" or d.kind == "update") then
+      if not d.active then vim.cmd.packadd("gitcppdiff.nvim") end
+      require("gitcppdiff").build()   -- async; shows live progress, see "The first build" below
     end
   end,
 })
-vim.pack.add({ "https://github.com/a-k-2/gitcppdiff" })
+vim.pack.add({ "https://github.com/a-k-2/gitcppdiff.nvim" })
 require("gitcppdiff").setup({})   -- optional
 ```
 
 Or build by hand: `:CppDiffBuild` (runs `make` in the plugin directory) or `make` in a checkout.
+
+### The first build
+
+The first build downloads tree-sitter and the C++ grammar from GitHub and compiles everything, which takes
+1–2 minutes (later builds take seconds). Nothing is silent:
+
+* **`make`** (lazy.nvim's `build`, or by hand) prints the phases and the full CMake output: compiler detection
+  (`The CXX compiler identification is GNU 13.3.0`, `Detecting CXX compiler ABI info`), the `git clone` of each dependency,
+  then the numbered compile steps.
+* **`:CppDiffBuild`** (and the `vim.pack` hook above) runs the same build asynchronously and shows it as a Neovim
+  progress message with a percentage, e.g. `gitcppdiff build:  20% downloading tree-sitter-cpp from GitHub …`,
+  `gitcppdiff build:  66% compiling 14/25`. Before it starts it checks that `make`, `cmake`, `git` and a C++ compiler are
+  there and names whatever is missing.
+* **`:CppDiffBuildLog`** opens the complete output of the last build. If a build fails, the last lines are shown in the
+  error message and the log opens by itself.
 `:checkhealth gitcppdiff` tells you what is missing. To use a binary from elsewhere: `setup({ bin = "/path/to/gitcppdiff" })`.
 
 ## Usage
@@ -89,7 +105,7 @@ Flags after `:CppDiff` go straight to the executable (see `gitcppdiff --help`). 
 | `?` | help · `q` / `<Esc>` close |
 
 On a **class / namespace / file row**, `a` / `b` / `u` apply to *everything below it*. After a single `a`/`b` the
-cursor advances to the next row. Pending changes are always visible; with `A` and `B` both off you see exactly what is
+cursor advances to the next row. API changes and renames carry a rounded pill badge (flat `[API]` / `[RENAMED]` with `icons = false`). Pending changes are always visible; with `A` and `B` both off you see exactly what is
 left to review. The top bar shows progress (`accepted · bad · pending`) and the filter state.
 
 Marks are stored per repository in `stdpath("state")/gitcppdiff/` and keyed by a hash of the change itself

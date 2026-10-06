@@ -42,6 +42,57 @@ check("window opens", ui.is_open())
 check("rows for resize/ratio/Panel", find("resize") and find("ratio") and find("Panel"))
 check("collapsed OldPanel shows member count", find("OldPanel", "-2 members") ~= nil, vim.inspect(lines()))
 check("winbar shows counts", vim.wo[S().list_win].winbar:find("pending", 1, true) ~= nil)
+-- wide Nerd Font glyphs (status +, -, warning sign, ..., mark icons, pill end cap) must be followed by a space
+do
+  local GLYPHS = { 0xf067, 0xf068, 0xf071, 0xf040, 0xf0ec, 0xf00c, 0xf00d, 0xf10c, 0xe0b4 }
+  local function spacing_ok(text)
+    for _, cp in ipairs(GLYPHS) do
+      local g = vim.fn.nr2char(cp)
+      local init = 1
+      while true do
+        local a, b = text:find(g, init, true)
+        if not a then break end
+        local nxt = text:sub(b + 1, b + 1)
+        if nxt ~= "" and nxt ~= " " then return false, string.format("U+%X followed by %q in %q", cp, nxt, text) end
+        init = b + 1
+      end
+    end
+    return true
+  end
+  local bad
+  for _, l in ipairs(lines()) do
+    local ok, why = spacing_ok(l)
+    if not ok then bad = why break end
+  end
+  check("glyph spacing: every glyph in the list is followed by a space", bad == nil, bad)
+  local bar = vim.wo[S().list_win].winbar:gsub("%%#[%w]+#", ""):gsub("%%=", "")
+  check("glyph spacing: winbar too", spacing_ok(bar), bar)
+  local plus, warn = vim.fn.nr2char(0xf067), vim.fn.nr2char(0xf071)
+  local found_counts = false
+  for _, l in ipairs(lines()) do
+    if l:find(plus .. " %d") or l:find(warn .. " %d") then found_counts = true end
+  end
+  check("glyph spacing: counts read '+ 2' / '! 1' (glyph, space, number)", found_counts, vim.inspect(lines()))
+end
+
+-- rounded pills like the CLI
+do
+  local capl, capr = vim.fn.nr2char(0xe0b6), vim.fn.nr2char(0xe0b4)
+  local r = find("resize")
+  local line = lines()[r]
+  check("pill: API change row has a rounded pill", line:find(capl .. " API " .. capr, 1, true) ~= nil, line)
+  check("pill: not the flat [API] text", line:find("[API]", 1, true) == nil)
+  local groups = {}
+  for _, m in ipairs(api.nvim_buf_get_extmarks(S().list_buf, api.nvim_create_namespace("gitcppdiff"), { r - 1, 0 }, { r - 1, -1 }, { details = true })) do
+    groups[m[4].hl_group] = true
+  end
+  check("pill: body and caps use the pill highlight groups", groups.GitCppDiffPillApi and groups.GitCppDiffPillApiCap, vim.inspect(groups))
+  local body = api.nvim_get_hl(0, { name = "GitCppDiffPillApi", link = false })
+  local cap = api.nvim_get_hl(0, { name = "GitCppDiffPillApiCap", link = false })
+  check("pill: solid body, cap in the same colour (so the ends look rounded)", body.bg and body.fg and cap.fg == body.bg and not cap.bg, vim.inspect({ body, cap }))
+  local pr = lines()[find("paintLegacy")]
+  check("pill: renamed row has a RENAMED pill", pr:find(capl .. " RENAMED " .. capr, 1, true) ~= nil, pr)
+end
 check("highlight groups defined", next(api.nvim_get_hl(0, { name = "GitCppDiffAdded" })) ~= nil)
 local lpos, ppos = api.nvim_win_get_position(S().list_win), api.nvim_win_get_position(S().prev_win)
 check("preview sits right of list", ppos[2] > lpos[2] and ppos[1] == lpos[1], vim.inspect({ lpos, ppos }))
@@ -390,7 +441,7 @@ check("--staged with nothing staged opens nothing", not ui.is_open())
 
 require("gitcppdiff").setup({ icons = false, callers = { enabled = false } })
 open()
-check("ascii mode renders", find("[ ]") ~= nil and find("[API]") ~= nil, vim.inspect(lines()))
+check("ascii mode renders", find("[ ]") ~= nil and find("[API]") ~= nil and find("[RENAMED]") ~= nil, vim.inspect(lines()))
 ui.close()
 local ok_h = pcall(require("gitcppdiff.health").check)
 check("health check runs", ok_h)

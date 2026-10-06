@@ -43,18 +43,23 @@ function M.setup_highlights()
   api.nvim_set_hl(0, "GitCppDiffAddLine", { link = "DiffAdd", default = true })
   api.nvim_set_hl(0, "GitCppDiffDelLine", { link = "DiffDelete", default = true })
   api.nvim_set_hl(0, "GitCppDiffHunk", { link = "Comment", default = true })
-  local function word(name, base)
+  local function solid(name, base, fallback)
     local fgc = api.nvim_get_hl(0, { name = base, link = false }).fg
     if not fgc then
-      api.nvim_set_hl(0, name, { link = "DiffText", default = true })
+      api.nvim_set_hl(0, name, { link = fallback, default = true })
+      api.nvim_set_hl(0, name .. "Cap", { link = fallback, default = true })
       return
     end
     local r, g, b = bit.rshift(fgc, 16) % 256, bit.rshift(fgc, 8) % 256, fgc % 256
     local dark = (0.299 * r + 0.587 * g + 0.114 * b) > 140
     api.nvim_set_hl(0, name, { bg = fgc, fg = dark and 0x101010 or 0xf0f0f0, bold = true, default = true })
+    api.nvim_set_hl(0, name .. "Cap", { fg = fgc, default = true }) -- the rounded ends: pill colour on the window background
   end
-  word("GitCppDiffAddWord", "Added")
-  word("GitCppDiffDelWord", "Removed")
+  solid("GitCppDiffAddWord", "Added", "DiffText")
+  solid("GitCppDiffDelWord", "Removed", "DiffText")
+  -- row badges: solid pill in the colour of DiagnosticWarn / DiagnosticInfo
+  solid("GitCppDiffPillApi", "DiagnosticWarn", "WarningMsg")
+  solid("GitCppDiffPillRenamed", "DiagnosticInfo", "Title")
 end
 
 api.nvim_create_autocmd("ColorScheme", { group = api.nvim_create_augroup("GitCppDiffHl", { clear = true }),
@@ -91,6 +96,7 @@ local function glyphs()
       file_src = c(0xe61d) .. " ", file_hdr = c(0xe61e) .. " ",
       mid = "├─ ", last = "└─ ", cont = "│  ", blank = "   ", arrow = "↳ ",
       fold_open = c(0xf078) .. " ", fold_closed = c(0xf054) .. " ", fold_none = "  ",
+      pill_l = c(0xe0b6), pill_r = c(0xe0b4), -- rounded powerline caps
     }
   end
   return {
@@ -122,7 +128,7 @@ local function render_row(ent, G)
   local function counts()
     for _, s in ipairs(model_m.STATUSES) do
       local n = node._cnt[s]
-      if n and n > 0 then put(" " .. G.status[s] .. n, STATUS_HL[s]) end
+      if n and n > 0 then put(" " .. G.status[s] .. " " .. n, STATUS_HL[s]) end
     end
   end
 
@@ -161,11 +167,22 @@ local function render_row(ent, G)
     local function tput(t, hl, hl2) tail[#tail + 1] = { t, hl, hl2 } end
     if model_m.TYPE_KINDS[c.kind] then tput("  " .. c.kind, "GitCppDiffDim") end
     tput("  ")
+    -- a rounded pill (like the CLI); plain [TEXT] without icons
+    local function pill(text, group, fallback)
+      if G.pill_l then
+        tput(G.pill_l, group .. "Cap")
+        tput(" " .. text .. " ", group)
+        tput(G.pill_r, group .. "Cap")
+        tput(" ")
+      else
+        tput("[" .. text .. "]", fallback, "GitCppDiffBold")
+      end
+    end
     if c.status == "api-change" then
-      tput("[API]", "GitCppDiffApi", "GitCppDiffBold")
+      pill("API", "GitCppDiffPillApi", "GitCppDiffApi")
     elseif c.status == "renamed" then
       local moved = c.reasons and c.reasons[1] and c.reasons[1]:sub(1, 5) == "moved"
-      tput(moved and "[MOVED]" or "[RENAMED]", "GitCppDiffRenamed", "GitCppDiffBold")
+      pill(moved and "MOVED" or "RENAMED", "GitCppDiffPillRenamed", "GitCppDiffRenamed")
     elseif c.status == "modified" and c.reasons and #c.reasons > 0 then
       local body, sig = false, false
       for _, r in ipairs(c.reasons) do
@@ -187,7 +204,7 @@ local function render_row(ent, G)
     if #node.children > 0 then
       for _, st2 in ipairs(model_m.STATUSES) do
         local n = node._cnt[st2]
-        if n and n > 0 then tput(" " .. G.status[st2] .. n, STATUS_HL[st2]) end
+        if n and n > 0 then tput(" " .. G.status[st2] .. " " .. n, STATUS_HL[st2]) end
       end
     end
     tput("  :" .. c.line, "GitCppDiffDim")

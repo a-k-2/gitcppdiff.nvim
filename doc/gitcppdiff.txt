@@ -18,7 +18,15 @@ COMMANDS                                                    *gitcppdiff-commands
 <
                                                                *:CppDiffBuild*
 :CppDiffBuild
-        Build the executable by running `make` in the plugin directory.
+        Build the executable by running `make` in the plugin directory. Runs
+        asynchronously and shows progress (compiler detection, dependency
+        downloads, compile steps) as a progress message. Checks for make,
+        cmake, git and a C++ compiler first.
+
+                                                            *:CppDiffBuildLog*
+:CppDiffBuildLog
+        Show the complete output of the last build. Opens by itself when a
+        build fails.
 
                                                                *:CppDiffClose*
 :CppDiffClose

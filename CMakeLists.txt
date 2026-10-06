@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
+message(STATUS "gitcppdiff: detecting the C and C++ compiler ...")
 project(gitcppdiff VERSION 0.1.0 LANGUAGES C CXX)
+message(STATUS "gitcppdiff: using C++ compiler ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION} (${CMAKE_CXX_COMPILER})")
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -10,6 +12,7 @@ endif()
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 include(FetchContent)
+set(FETCHCONTENT_QUIET OFF)  # show the git clone output: the first configure downloads for a while
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 
 FetchContent_Declare(tree_sitter
@@ -21,7 +24,11 @@ FetchContent_Declare(tree_sitter_cpp
   GIT_REPOSITORY https://github.com/tree-sitter/tree-sitter-cpp.git
   GIT_TAG v0.23.4 GIT_SHALLOW TRUE
   SOURCE_SUBDIR does-not-exist)
-FetchContent_MakeAvailable(tree_sitter tree_sitter_cpp)
+message(STATUS "gitcppdiff: downloading tree-sitter (github.com/tree-sitter/tree-sitter) ...")
+FetchContent_MakeAvailable(tree_sitter)
+message(STATUS "gitcppdiff: downloading tree-sitter-cpp (github.com/tree-sitter/tree-sitter-cpp) ...")
+FetchContent_MakeAvailable(tree_sitter_cpp)
+message(STATUS "gitcppdiff: dependencies ready")
 
 add_library(ts_cpp STATIC
   ${tree_sitter_cpp_SOURCE_DIR}/src/parser.c

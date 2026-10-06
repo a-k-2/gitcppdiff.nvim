@@ -14,6 +14,8 @@ cmd("CppDiff", function(o) require("gitcppdiff").open(o.fargs) end, {
   desc = "Semantic C++ diff overview: [<rev> | <rev>..<rev> | <rev>...<rev> | --staged] [-- <path>...]",
 })
 cmd("CppDiffBuild", function() require("gitcppdiff").build() end, { desc = "Build the gitcppdiff executable" })
+cmd("CppDiffBuildLog", function() require("gitcppdiff.bin").show_log() end,
+  { desc = "Show the output of the last executable build" })
 cmd("CppDiffClose", function() require("gitcppdiff").close() end, { desc = "Close the gitcppdiff window" })
 cmd("CppDiffClearMarks", function() require("gitcppdiff").clear_marks() end,
   { desc = "Forget accepted / bad marks of this repository" })

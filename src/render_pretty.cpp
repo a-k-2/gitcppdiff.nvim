@@ -337,7 +337,7 @@ class Renderer {
     for (Status s : {Status::Added, Status::Removed, Status::Modified, Status::ApiChange, Status::Renamed}) {
       int n = tot[static_cast<int>(s)];
       if (!n) continue;
-      p_.put(right, p_.status_glyph(s) + std::to_string(n) + " ", fgb(p_.status_color(s)));
+      p_.put(right, p_.status_glyph(s) + " " + std::to_string(n) + " ", fgb(p_.status_color(s)));
     }
     int fill = std::max(3, o_.width - left.w - right.w - 3);
     string rl;
@@ -360,7 +360,7 @@ class Renderer {
     p_.put(l, "  ");
     for (Status s : {Status::Added, Status::Removed, Status::Modified, Status::ApiChange, Status::Renamed}) {
       int c = n.cnt[static_cast<int>(s)];
-      if (c) p_.put(l, p_.status_glyph(s) + std::to_string(c) + " ", fg(p_.status_color(s)));
+      if (c) p_.put(l, p_.status_glyph(s) + " " + std::to_string(c) + " ", fg(p_.status_color(s)));
     }
   }
 

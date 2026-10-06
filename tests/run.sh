@@ -87,6 +87,22 @@ n=$(python3 -c "import json;print(len(json.load(open('$T/out.json'))['changes'])
 [ "$n" = 8 ] && echo "ok   exactly 8 changes (comment-only edit ignored)" || { echo "FAIL expected 8 changes, got $n"; fail=1; }
 "$BIN" --fail-on-api >/dev/null && { echo "FAIL --fail-on-api should exit 2"; fail=1; } || [ $? -eq 2 ] || fail=1
 
+# ── glyph spacing in the CLI: wide Nerd Font glyphs must be followed by a space ──
+"$BIN" --color=never > "$T/pretty.txt"
+python3 - "$T/pretty.txt" <<'PY' || fail=1
+import sys
+text = open(sys.argv[1], encoding="utf-8").read()
+glyphs = {0xf067: "plus", 0xf068: "minus", 0xf071: "warning", 0xf040: "pencil", 0xf0ec: "exchange", 0xf00c: "check", 0xe0b4: "pill end cap"}
+bad = []
+for i, ch in enumerate(text):
+    if ord(ch) in glyphs and i + 1 < len(text) and text[i + 1] not in " \n":
+        bad.append("%s followed by %r near %r" % (glyphs[ord(ch)], text[i + 1], text[max(0, i - 8):i + 10]))
+has_counts = any(chr(g) + " " + d in text for g in (0xf067, 0xf071) for d in "123456789")
+print(("ok   " if not bad else "FAIL ") + "CLI: every glyph is followed by a space" + ("" if not bad else " -> " + "; ".join(bad[:3])))
+print(("ok   " if has_counts else "FAIL ") + "CLI: counts read '+ 2' (glyph, space, number)")
+sys.exit(0 if not bad and has_counts else 1)
+PY
+
 # ───────────────── helpers for the scenarios below ─────────────────
 q() {  # q <name> <python expr over d (json) and c(qualified_name) -> change>
   python3 - "$1" "$2" "$J" <<'PY' || fail=1
